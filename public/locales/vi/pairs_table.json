@@ -1,0 +1,37 @@
+{
+  "table_head": {
+    "dexInfo": {
+      "ltBlock": "Latest block ",
+      "ltBlockTimeStamp": "ago",
+      "totalTXCount": {
+        "M5": "5m TXNS",
+        "H1": "1h TXNS",
+        "H6": "6h TXNS",
+        "H24": "24h TXNS"
+      },
+      "totalVolume": {
+        "M5": "5m Volume",
+        "H1": "1h Volume",
+        "H6": "6h Volume",
+        "H24": "24h Volume"
+      }
+    },
+    "token": "Token",
+    "price": "Price",
+    "activity": {
+      "title": "Activity",
+      "sub": {
+        "txCount": "TXNS",
+        "volume": "Volume"
+      }
+    },
+    "price_change": "Price Change",
+    "liquidity": "Liquidity",
+    "fdv": { "name": "FDV", "description": "Fully diluted valuation" }
+  },
+  "pagination": {
+    "current": "Showing pairs",
+    "of": "of",
+    "pairs": "Pairs"
+  }
+}

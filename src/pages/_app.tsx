@@ -6,6 +6,7 @@ import { store } from '@/store';
 import Layouts, { LAYOUTS } from '@/components/layouts';
 
 import '@/styles/globals.css';
+import { appWithTranslation } from 'next-i18next';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   layout?: LAYOUTS;
@@ -15,7 +16,7 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
 
-export default function App({ Component, pageProps }: AppPropsWithLayout) {
+function App({ Component, pageProps }: AppPropsWithLayout) {
   const Layout = Layouts[Component.layout || LAYOUTS.MAIN_LAYOUT];
 
   return (
@@ -34,3 +35,4 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     </>
   );
 }
+export default appWithTranslation(App);

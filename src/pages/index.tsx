@@ -1,3 +1,4 @@
+import { GetServerSidePropsContext, GetStaticPropsContext } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
@@ -6,19 +7,44 @@ import { NextPageWithLayout } from './_app';
 import { LAYOUTS } from '@/components/layouts';
 import { getExampleState, useAppSelector } from '@/store';
 import { useEffect } from 'react';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import useCookie from '@/hooks/useCookie';
+import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  console.log(
+    '🚀 ~ file: index.tsx:22 ~ getServerSideProps ~ context.locale:',
+    context.locale
+  );
+  return {
+    props: {
+      ...(await serverSideTranslations(context.locale || 'en')),
+    },
+  };
+}
+
 const Home: NextPageWithLayout = () => {
   const exampleState = useAppSelector(getExampleState);
+  const { t } = useTranslation();
+  // const { setCookie } = useCookie();
 
   useEffect(() => {
     console.log('🚀 ~ file: index.tsx:15 ~ exampleState:', exampleState);
+    console.log(t('common:page'));
+    // setCookie('lang', 'vi', {
+    //   expires: new Date(Date.now() + 86400e3),
+    // });
   }, [exampleState]);
 
   return (
     <>
       <div className={styles.description}>
+        <Link href={'/'} locale='vi'>
+          to vi lang
+        </Link>
         <p>
           Get started by editing&nbsp;
           <code className={styles.code}>src/pages/index.tsx</code>

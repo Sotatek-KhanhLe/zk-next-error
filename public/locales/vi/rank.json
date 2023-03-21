@@ -1,0 +1,11 @@
+{
+    "columnName": "Name",
+    "columnFloor": "Floor",
+    "columnTotalVol": "Total Vol",
+    "column24Vol": "24h Vol",
+    "column24VolPercent": "24h Vol %",
+    "columnTime": "Time",
+    "highestTotalVol": "Highest Total Vol",
+    "24hVolAscending": "24h Vol % Ascending",
+    "24hVolDescending": "24h Vol % Descending"
+}

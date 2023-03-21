@@ -1,0 +1,13 @@
+{
+  "title": "Customize Ranking and Filtering",
+  "sort": "Rank By:",
+  "liquidity": "Liquidity:",
+  "fdv": "FDV:",
+  "pair_age": "Pair age:",
+  "Txns": " Txns",
+  "Buys": " Buys",
+  "Sells": " Sells",
+  "Volume": " Volume",
+  "Changes": " Changes",
+  "Filter": "Filters (Optional)"
+}

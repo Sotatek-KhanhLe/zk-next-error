@@ -1,0 +1,56 @@
+{
+  "key": "en",
+  "page": "Home",
+  "loadMore": "Load more",
+  "reset": "Reset",
+  "creator": "Creator",
+  "footer": {
+    "stack": "Stacks",
+    "market": "Market",
+    "rank": "Ranks",
+    "reward": "Rewards",
+    "info": "Info",
+    "about": "About",
+    "contact": "Contact",
+    "help": "Help",
+    "termOfService": "Terms of service",
+    "copyright": "Copyright 2022 HelixMeta | By NFT people, for NFT people",
+    "description": "Lorem Ipsum is simply dummy"
+  },
+  "header": {
+    "market": "Market",
+    "rank": "Ranks",
+    "reward": "Rewards",
+    "connectWallet": "Connect Wallet",
+    "profile": "Profile"
+  },
+  "timeMark": {
+    "M5": "5m",
+    "H1": "1h",
+    "H6": "6h",
+    "H24": "24h"
+  },
+  "modal_search": {
+    "placeholder": "Token, pair or address",
+    "pair_display": {
+      "price24h": "24h Price Change",
+      "volume24h": "24h Volume",
+      "liquidity": "Liquidity",
+      "pair": "Pair",
+      "age": "Age"
+    },
+    "empty": {
+      "title": "No pairs found",
+      "description": "Note: Pairs without any transactions in the past 24 hours will not show up on this screen."
+    }
+  },
+  "empty": {
+    "title": "Nothing to see here"
+  },
+  "try": "Try",
+  "or": "or",
+  "connection_fail": "Failed connecting to server",
+  "ws_exception": "Your input being wrong or something has happened with server",
+  "loading": "Loading",
+  "search_guide": "Press \" / \" key on keyboard to open search box"
+}

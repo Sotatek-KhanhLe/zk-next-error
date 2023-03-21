@@ -1,0 +1,6 @@
+{
+  "title": "Filter Amount",
+  "notification": " Note: For performance reason, if a filter doesn't match any transactions within a 7 day window then no more transactions are searched",
+  "Clear": "Clear",
+  "Apply": "Apply"
+}

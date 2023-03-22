@@ -1,4 +1,4 @@
-import { GetServerSidePropsContext, GetStaticPropsContext } from 'next';
+import { GetStaticPaths, GetStaticProps } from 'next';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
 import styles from '@/styles/home.module.css';
@@ -6,23 +6,36 @@ import { NextPageWithLayout } from './_app';
 import { LAYOUTS } from '@/components/layouts';
 import { getExampleState, useAppSelector } from '@/store';
 import { useEffect } from 'react';
-import { useTranslation } from 'next-i18next';
+import { SSRConfig, useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Link from 'next/link';
+import { LANG } from '@/configs/langs';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export async function getStaticProps(context: GetStaticPropsContext) {
+type Props = {
+  lang: string;
+} & SSRConfig;
+
+export const getStaticPath: GetStaticPaths = async (context) => {
+  return {
+    paths: Object.values(LANG).map((lang) => ({ params: {}, locale: lang })),
+    fallback: false,
+  };
+};
+
+export const getStaticProps: GetStaticProps<Props> = async (context) => {
+  const lang = context.locale || 'en';
   return {
     props: {
-      ...(await serverSideTranslations(context.locale || 'en')),
+      ...(await serverSideTranslations(lang)),
+      lang: lang,
     },
   };
-}
+};
 
-const Home: NextPageWithLayout = () => {
+const Home: NextPageWithLayout<Props> = (props) => {
   const exampleState = useAppSelector(getExampleState);
-
   const { t } = useTranslation();
   // const { setCookie } = useCookie();
 
@@ -32,12 +45,19 @@ const Home: NextPageWithLayout = () => {
     // setCookie('lang', 'vi', {
     //   expires: new Date(Date.now() + 86400e3),
     // });
-  }, [exampleState]);
+  }, [props]);
 
   return (
     <>
       <div className={styles.description}>
-        <Link href={'/about'}>to about vi lang</Link>
+        <Link
+          href={'/'}
+          locale={props.lang && props.lang == LANG.VI ? LANG.EN : LANG.VI}
+          shallow={false}
+        >
+          Change to {props.lang && props.lang == LANG.VI ? LANG.EN : LANG.VI}
+        </Link>
+        <Link href={'/about'}>to About</Link>
         <p>
           Get started by editing&nbsp;
           <code className={styles.code}>src/pages/index.tsx</code>

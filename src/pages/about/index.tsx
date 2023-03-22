@@ -1,4 +1,9 @@
-import { GetServerSidePropsContext, GetStaticPropsContext } from 'next';
+import {
+  GetServerSidePropsContext,
+  GetStaticPaths,
+  GetStaticProps,
+  GetStaticPropsContext,
+} from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
@@ -11,7 +16,7 @@ import {
   useAppSelector,
 } from '@/store';
 import { useEffect } from 'react';
-import { useTranslation } from 'next-i18next';
+import { SSRConfig, useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import useCookie from '@/hooks/useCookie';
 import { uiSliceActions } from '@/store/slices/uiSlice';
@@ -22,19 +27,25 @@ import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  console.log(
-    '🚀 ~ file: index.tsx:22 ~ getServerSideProps ~ context.locale:',
-    context.locale
-  );
+type Props = {} & SSRConfig;
+
+export const getStaticPath: GetStaticPaths = async (context) => {
+  return {
+    paths: Object.values(LANG).map((lang) => ({ params: {}, locale: lang })),
+    fallback: false,
+  };
+};
+
+export const getStaticProps: GetStaticProps<Props> = async (context) => {
+  const lang = context.locale || 'en';
   return {
     props: {
-      ...(await serverSideTranslations(context.locale || 'en')),
+      ...(await serverSideTranslations(lang)),
     },
   };
-}
+};
 
-const About: NextPageWithLayout = () => {
+const About: NextPageWithLayout<Props> = () => {
   const exampleState = useAppSelector(getExampleState);
 
   const { t } = useTranslation();
@@ -47,7 +58,7 @@ const About: NextPageWithLayout = () => {
   return (
     <>
       <div className={styles.description}>
-        <Link href={'/'}>to vi lang</Link>
+        <Link href={'/'}>to {t('common:page')}</Link>
         <p>
           About&nbsp;
           <code className={styles.code}>src/pages/index.tsx</code>

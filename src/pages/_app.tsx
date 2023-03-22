@@ -7,6 +7,7 @@ import Layouts, { LAYOUTS } from '@/components/layouts';
 
 import '@/styles/globals.css';
 import { appWithTranslation } from 'next-i18next';
+import { ChakraProvider } from '@chakra-ui/react';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   layout?: LAYOUTS;
@@ -28,9 +29,11 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
         <link rel='icon' href='/favicon.ico' />
       </Head>
       <Provider store={store}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        <ChakraProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </ChakraProvider>
       </Provider>
     </>
   );

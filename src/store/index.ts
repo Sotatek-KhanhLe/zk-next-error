@@ -11,7 +11,7 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  blacklist: [],
+  blacklist: ['ui'],
 };
 
 export const store = configureStore({
@@ -35,3 +35,4 @@ export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 export const getExampleState = (state: RootState) => state.example;
+export const getUIState = (state: RootState) => state.ui;

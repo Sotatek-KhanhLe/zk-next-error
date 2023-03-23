@@ -1,4 +1,9 @@
-import { GetStaticPaths, GetStaticProps } from 'next';
+import {
+  GetStaticPaths,
+  GetStaticProps,
+  GetStaticPropsResult,
+  PreviewData,
+} from 'next';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
 import { NextPageWithLayout } from './_app';
@@ -11,6 +16,8 @@ import Link from 'next/link';
 import { LANG } from '@/configs/langs';
 import styles from '@/styles/home.module.scss';
 import variables from '@/styles/_variables.module.scss';
+import { getStaticLocalePath } from '@/helpers/handleSeverProps';
+import { ParsedUrlQuery } from 'querystring';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,10 +26,7 @@ type Props = {
 } & SSRConfig;
 
 export const getStaticPath: GetStaticPaths = async (context) => {
-  return {
-    paths: Object.values(LANG).map((lang) => ({ params: {}, locale: lang })),
-    fallback: false,
-  };
+  return getStaticLocalePath<{ name: string }>({ fallback: false });
 };
 
 export const getStaticProps: GetStaticProps<Props> = async (context) => {

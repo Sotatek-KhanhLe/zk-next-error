@@ -5,9 +5,10 @@ import { Provider } from 'react-redux';
 import { store } from '@/store';
 import Layouts, { LAYOUTS } from '@/components/layouts';
 
-import '@/styles/globals.css';
 import { appWithTranslation } from 'next-i18next';
 import { ChakraProvider } from '@chakra-ui/react';
+import theme from '@/configs/theme';
+import '@/styles/globals.scss';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   layout?: LAYOUTS;
@@ -29,7 +30,7 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
         <link rel='icon' href='/favicon.ico' />
       </Head>
       <Provider store={store}>
-        <ChakraProvider>
+        <ChakraProvider theme={theme}>
           <Layout>
             <Component {...pageProps} />
           </Layout>

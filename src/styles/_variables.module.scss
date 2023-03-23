@@ -1,0 +1,9 @@
+$base-size: 16px;
+$color-white: #ffffff;
+$color-black: #000000;
+
+:export {
+  baseSize: $base-size;
+  colorWhite: $color-white;
+  colorBlack: $color-black;
+}

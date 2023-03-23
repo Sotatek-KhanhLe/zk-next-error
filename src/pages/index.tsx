@@ -1,7 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
 import Image from 'next/image';
 import { Inter } from 'next/font/google';
-import styles from '@/styles/home.module.css';
 import { NextPageWithLayout } from './_app';
 import { LAYOUTS } from '@/components/layouts';
 import { getExampleState, useAppSelector } from '@/store';
@@ -10,6 +9,8 @@ import { SSRConfig, useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Link from 'next/link';
 import { LANG } from '@/configs/langs';
+import styles from '@/styles/home.module.scss';
+import variables from '@/styles/_variables.module.scss';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -54,6 +55,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
           href={'/'}
           locale={props.lang && props.lang == LANG.VI ? LANG.EN : LANG.VI}
           shallow={false}
+          style={{ fontSize: variables.baseSize }}
         >
           Change to {props.lang && props.lang == LANG.VI ? LANG.EN : LANG.VI}
         </Link>

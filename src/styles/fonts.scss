@@ -1,0 +1,64 @@
+$font: (
+  primary: (
+    regular: (
+      font: 'Avenir-Regular',
+      ext: 'otf',
+    ),
+    medium: (
+      font: 'Avenir-Medium',
+      ext: 'otf',
+    ),
+    black: (
+      font: 'Avenir-Black',
+      ext: 'otf',
+    ),
+  ),
+);
+
+@function font-primary($key) {
+  @return map-get(map-get($font, primary), $key);
+}
+
+@mixin font-generator() {
+  @each $font-key, $font-variants in $font {
+    @each $variant-key, $variant-value in $font-variants {
+      $font-face: $font-key + '-' + $variant-key;
+      $font-name: map-get($variant-value, font);
+      $font-ext: map-get($variant-value, ext);
+      $url: '/assets/fonts/' + $font-name + '.' + $font-ext;
+      @font-face {
+        font-family: $font-face;
+        src: url($url);
+      }
+    }
+  }
+}
+
+@mixin font-class-content-generator($key, $value) {
+  .font-#{$key} {
+    font-family: $value;
+    &-hover {
+      &:hover {
+        font-family: $value;
+      }
+    }
+  }
+}
+
+@mixin font-class-generator() {
+  @each $font-key, $font-variants in $font {
+    @each $variant-key, $variant-value in $font-variants {
+      $font-family: $font-key + '-' + $variant-key + ', sans-serif';
+      @if $variant-key == 'regular' {
+        @include font-class-content-generator($font-key, $font-family);
+      } @else {
+        @include font-class-content-generator(
+          $font-key + '-' + $variant-key,
+          $font-family
+        );
+      }
+    }
+  }
+}
+@include font-class-generator();
+@include font-generator();

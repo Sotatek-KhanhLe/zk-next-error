@@ -1,4 +1,9 @@
-import axios, { AxiosRequestConfig, AxiosResponse, ResponseType } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosRequestConfig,
+  AxiosResponse,
+  ResponseType,
+} from 'axios';
 import StorageUtils from '@/helpers/handleBrowserStorage';
 
 export class AxiosService {
@@ -9,7 +14,7 @@ export class AxiosService {
     const service = axios.create({
       withCredentials: false,
       responseType: 'json',
-      baseURL: process.env.NEXT_PUBLIC_BASE_URL_API_BACKEND || '',
+      baseURL: process.env.NEXT_PUBLIC_BASE_URI || '',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -33,11 +38,11 @@ export class AxiosService {
     return config;
   }
 
-  handleSuccess(response: any) {
+  handleSuccess(response: AxiosResponse<any>) {
     return response.data;
   }
 
-  handleError = (error: any) => {
+  handleError = (error: AxiosError) => {
     // if (error?.response?.status === 401) {
     //   throw error
     // }
@@ -60,43 +65,59 @@ export class AxiosService {
     return this.service.get(endpoint, options);
   }
 
-  async post(endpoint: string, payload: any, options?: AxiosRequestConfig) {
+  async post<T>(
+    endpoint: string,
+    payload: any,
+    options?: AxiosRequestConfig
+  ): Promise<T> {
     return this.service.post(endpoint, payload, options);
   }
 
-  async put(endpoint: string, payload: any, options?: AxiosRequestConfig) {
+  async put<T>(
+    endpoint: string,
+    payload: any,
+    options?: AxiosRequestConfig
+  ): Promise<T> {
     return this.service.put(endpoint, payload, options);
   }
 
-  async patch(endpoint: string, payload: any, options?: AxiosRequestConfig) {
+  async patch<T>(
+    endpoint: string,
+    payload: any,
+    options?: AxiosRequestConfig
+  ): Promise<T> {
     return this.service.patch(endpoint, payload, options);
   }
 
-  async delete(endpoint: string, options?: AxiosRequestConfig) {
+  async delete<T>(endpoint: string, options?: AxiosRequestConfig): Promise<T> {
     return this.service.delete(endpoint, options);
   }
 
-  async getAuth(endpoint: string, options?: any) {
+  async getAuth<T>(endpoint: string, options?: any): Promise<T> {
     const customOptions = this.getOptionsAuth(options);
     return this.service.get(endpoint, customOptions);
   }
 
-  async postAuth(endpoint: string, payload: any, options?: any) {
+  async postAuth<T>(endpoint: string, payload: any, options?: any): Promise<T> {
     const customOptions = this.getOptionsAuth(options);
     return this.service.post(endpoint, payload, customOptions);
   }
 
-  async putAuth(endpoint: string, payload: any, options?: any) {
+  async putAuth<T>(endpoint: string, payload: any, options?: any): Promise<T> {
     const customOptions = this.getOptionsAuth(options);
     return this.service.put(endpoint, payload, customOptions);
   }
 
-  async patchAuth(endpoint: string, payload: any, options?: any) {
+  async patchAuth<T>(
+    endpoint: string,
+    payload: any,
+    options?: any
+  ): Promise<T> {
     const customOptions = this.getOptionsAuth(options);
     return this.service.patch(endpoint, payload, customOptions);
   }
 
-  async deleteAuth(endpoint: string, options?: any) {
+  async deleteAuth<T>(endpoint: string, options?: any): Promise<T> {
     const customOptions = this.getOptionsAuth(options);
     return this.service.delete(endpoint, customOptions);
   }

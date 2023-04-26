@@ -9,7 +9,7 @@ import { Inter } from 'next/font/google';
 import { NextPageWithLayout } from './_app';
 import { LAYOUTS } from '@/components/layouts';
 import { getExampleState, useAppSelector } from '@/store';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SSRConfig, useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Link from 'next/link';
@@ -18,6 +18,10 @@ import styles from '@/styles/home.module.scss';
 import variables from '@/styles/_variables.module.scss';
 import { getStaticLocalePath } from '@/helpers/handleSeverProps';
 import { ParsedUrlQuery } from 'querystring';
+import exampleService from '@/services/exampleService';
+import { handleRequest } from '@/helpers/handleAsync';
+import { loadStripe } from '@stripe/stripe-js';
+import { useRouter } from 'next/router';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -42,8 +46,10 @@ export const getStaticProps: GetStaticProps<Props> = async (context) => {
 const Home: NextPageWithLayout<Props> = (props) => {
   const exampleState = useAppSelector(getExampleState);
   const { t } = useTranslation();
-  // const { setCookie } = useCookie();
+  const params = useRouter();
+  const { kbAccountId, sessionId } = params.query;
 
+  // const { setCookie } = useCookie();
   useEffect(() => {
     console.log('🚀 ~ file: index.tsx:15 ~ exampleState:', exampleState);
     console.log(t('common:page'));
@@ -51,6 +57,107 @@ const Home: NextPageWithLayout<Props> = (props) => {
     //   expires: new Date(Date.now() + 86400e3),
     // });
   }, [props]);
+  const kb_Account_Id = '9ec4531f-5b44-4969-b873-d33b730b74fc';
+
+  //  demo run payment
+  async function Run() {
+    const [res, error] = await handleRequest(
+      exampleService.getCheckoutSession({
+        kbAccountId: kb_Account_Id,
+        successUrl: `http://localhost:3001/?kbAccountId=${kb_Account_Id}&sessionId={CHECKOUT_SESSION_ID}`,
+      })
+    );
+    if (error) return;
+    console.log(res);
+    const section_id_key_value = res.formFields.find(
+      (item: any) => item && item.key === 'id'
+    );
+    const sessionId = section_id_key_value ? section_id_key_value.value : '';
+    const [stripePromise, loadStripError] = await handleRequest(
+      loadStripe(
+        'pk_test_51N0F6RIorOjdgiplgPu9umOI5LZHaribNpt2BezH1LWXg5PNPZfeRNKcaybvsBBqpJrhoHUNAEDy2KyKatn6EWGt001VVNYnl5'
+      )
+    );
+    if (loadStripError) return;
+
+    stripePromise!.redirectToCheckout({
+      sessionId,
+    });
+  }
+
+  async function addPaymentMethod(account: string, session: string) {
+    const [res, error] = await handleRequest(
+      exampleService.addPaymentMethod({
+        kbAccountId: account,
+        sessionId: session,
+      })
+    );
+  }
+
+  async function createSubscription(account: string) {
+    const [res, error] = await handleRequest(
+      exampleService.createSubscription(
+        {
+          accountId: account,
+          externalKey: account,
+          productName: 'Sports',
+          productCategory: 'BASE',
+          billingPeriod: 'MONTHLY',
+          priceList: 'DEFAULT',
+        },
+        {
+          callCompletion: true,
+          callTimeoutSec: 20,
+        }
+      )
+    );
+  }
+
+  async function getAccountInvoices(account: string) {
+    const [res, error] = await handleRequest(
+      exampleService.getAccountInvoices({
+        accountId: account,
+      })
+    );
+    console.log(
+      '🚀 ~ file: index.tsx:115 ~ getAccountInvoices ~ res, error:',
+      res,
+      error
+    );
+  }
+  async function getAccount(account: string) {
+    const [res, error] = await handleRequest(
+      exampleService.getAccount({
+        accountId: account,
+        accountWithBalance: true,
+        accountWithBalanceAndCBA: true,
+      })
+    );
+    console.log(
+      '🚀 ~ file: index.tsx:115 ~ getAccountInvoices ~ res, error:',
+      res,
+      error
+    );
+  }
+
+  async function getCatalog() {
+    const [res, error] = await handleRequest(exampleService.getCatalog());
+  }
+
+  useEffect(() => {
+    getCatalog();
+  }, []);
+
+  useEffect(() => {
+    // if (true) return;
+    console.log(kbAccountId, sessionId);
+
+    if (!!!kbAccountId || !!!sessionId) return;
+    // addPaymentMethod(kbAccountId as string, sessionId as string);
+    // createSubscription(kbAccountId as string);
+    // getAccountInvoices(kbAccountId as string);
+    // getAccount(kbAccountId as string);
+  }, [kbAccountId, sessionId]);
 
   return (
     <>
@@ -86,7 +193,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
           </a>
         </div>
       </div>
-
+      <button onClick={Run}>Pay</button>
       <div className={styles.center}>
         <Image
           className={styles.logo}

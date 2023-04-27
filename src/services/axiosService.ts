@@ -39,7 +39,7 @@ export class AxiosService {
   }
 
   handleSuccess(response: AxiosResponse<any>) {
-    return response.data;
+    return response;
   }
 
   handleError = (error: AxiosError) => {

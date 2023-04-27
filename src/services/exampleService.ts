@@ -17,6 +17,23 @@ class PairDetailService {
       }
     );
   };
+
+  createAccount = (payload: { name?: string; currency?: string }) => {
+    return this.service.post<any>(`1.0/kb/accounts`, payload, {
+      auth: {
+        username: 'admin',
+        password: 'password',
+      },
+      headers: {
+        'X-Killbill-ApiKey': 'bob',
+        'X-Killbill-ApiSecret': 'lazar',
+        'X-Killbill-CreatedBy': 'admin',
+        'X-Killbill-Reason': 'New subscription',
+        'X-Killbill-Comment': 'Trigger by Sinatra',
+      },
+    });
+  };
+
   getCheckoutSession = (query: { kbAccountId: string; successUrl: string }) => {
     return this.service.post<any>(`${this.baseURL}/checkout`, null, {
       auth: {
@@ -68,7 +85,7 @@ class PairDetailService {
   createSubscription = (
     payload: {
       accountId: string;
-      externalKey: string;
+      // externalKey: string;
       // planName: string;
       productName: string;
       productCategory: string;
@@ -76,8 +93,8 @@ class PairDetailService {
       priceList: string;
     },
     params: {
-      callCompletion: boolean;
-      callTimeoutSec: number;
+      callCompletion?: boolean;
+      callTimeoutSec?: number;
     }
   ) => {
     return this.service.post<any>(`1.0/kb/subscriptions`, payload, {

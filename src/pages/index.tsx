@@ -57,19 +57,28 @@ const Home: NextPageWithLayout<Props> = (props) => {
     //   expires: new Date(Date.now() + 86400e3),
     // });
   }, [props]);
-  const kb_Account_Id = '9ec4531f-5b44-4969-b873-d33b730b74fc';
 
   //  demo run payment
   async function Run() {
+    const [accountRes, accountError] = await handleRequest(
+      exampleService.createAccount({
+        name: 'khanhle',
+        currency: 'USD',
+      })
+    );
+    if (accountError) return;
+
+    const account = accountRes!.headers.location.split('accounts/')[1];
+
     const [res, error] = await handleRequest(
       exampleService.getCheckoutSession({
-        kbAccountId: kb_Account_Id,
-        successUrl: `http://localhost:3001/?kbAccountId=${kb_Account_Id}&sessionId={CHECKOUT_SESSION_ID}`,
+        kbAccountId: account,
+        successUrl: `http://localhost:3001/?kbAccountId=${account}&sessionId={CHECKOUT_SESSION_ID}`,
       })
     );
     if (error) return;
     console.log(res);
-    const section_id_key_value = res.formFields.find(
+    const section_id_key_value = res.data.formFields.find(
       (item: any) => item && item.key === 'id'
     );
     const sessionId = section_id_key_value ? section_id_key_value.value : '';
@@ -99,7 +108,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
       exampleService.createSubscription(
         {
           accountId: account,
-          externalKey: account,
+          // externalKey: account,
           productName: 'Sports',
           productCategory: 'BASE',
           billingPeriod: 'MONTHLY',
@@ -148,16 +157,31 @@ const Home: NextPageWithLayout<Props> = (props) => {
     getCatalog();
   }, []);
 
+  async function executePayment(kbAccountId: string, sessionId: string) {
+    const [_, error] = await handleRequest(
+      addPaymentMethod(kbAccountId as string, sessionId as string)
+    );
+    if (error) {
+      alert('can add payment method');
+    }
+    await handleRequest(createSubscription(kbAccountId as string));
+  }
+
   useEffect(() => {
     // if (true) return;
     console.log(kbAccountId, sessionId);
 
     if (!!!kbAccountId || !!!sessionId) return;
-    // addPaymentMethod(kbAccountId as string, sessionId as string);
-    // createSubscription(kbAccountId as string);
+    // executePayment(kbAccountId as string, sessionId as string);
     // getAccountInvoices(kbAccountId as string);
     // getAccount(kbAccountId as string);
   }, [kbAccountId, sessionId]);
+
+  useEffect(() => {
+    if (!!!kbAccountId) return;
+    // getAccountInvoices(kbAccountId as string);
+    // getAccount(kbAccountId as string);
+  }, [kbAccountId]);
 
   return (
     <>

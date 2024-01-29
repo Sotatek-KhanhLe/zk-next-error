@@ -22,6 +22,8 @@ import exampleService from '@/services/exampleService';
 import { handleRequest } from '@/helpers/handleAsync';
 import { loadStripe } from '@stripe/stripe-js';
 import { useRouter } from 'next/router';
+import { Mina } from 'o1js';
+import moment from 'moment';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -42,146 +44,89 @@ export const getStaticProps: GetStaticProps<Props> = async (context) => {
     },
   };
 };
+function getTime() {
+  return moment().format('MMMM Do YYYY, h:mm:ss a');
+}
 
 const Home: NextPageWithLayout<Props> = (props) => {
   const exampleState = useAppSelector(getExampleState);
   const { t } = useTranslation();
-  const params = useRouter();
-  const { kbAccountId, sessionId } = params.query;
-
-  // const { setCookie } = useCookie();
-  useEffect(() => {
-    console.log('🚀 ~ file: index.tsx:15 ~ exampleState:', exampleState);
-    console.log(t('common:page'));
-    // setCookie('lang', 'vi', {
-    //   expires: new Date(Date.now() + 86400e3),
-    // });
-  }, [props]);
-
-  //  demo run payment
-  async function Run() {
-    const [accountRes, accountError] = await handleRequest(
-      exampleService.createAccount({
-        name: 'khanhle',
-        currency: 'USD',
-      })
-    );
-    if (accountError) return;
-
-    const account = accountRes!.headers.location.split('accounts/')[1];
-
-    const [res, error] = await handleRequest(
-      exampleService.getCheckoutSession({
-        kbAccountId: account,
-        successUrl: `http://localhost:3001/?kbAccountId=${account}&sessionId={CHECKOUT_SESSION_ID}`,
-      })
-    );
-    if (error) return;
-    console.log(res);
-    const section_id_key_value = res.data.formFields.find(
-      (item: any) => item && item.key === 'id'
-    );
-    const sessionId = section_id_key_value ? section_id_key_value.value : '';
-    const [stripePromise, loadStripError] = await handleRequest(
-      loadStripe(
-        'pk_test_51N0F6RIorOjdgiplgPu9umOI5LZHaribNpt2BezH1LWXg5PNPZfeRNKcaybvsBBqpJrhoHUNAEDy2KyKatn6EWGt001VVNYnl5'
-      )
-    );
-    if (loadStripError) return;
-
-    stripePromise!.redirectToCheckout({
-      sessionId,
+  async function connectWallet() {
+    const snap = await window?.ethereum?.request<
+      Record<string, { id: string; version: string }>
+    >({
+      method: 'wallet_getSnaps',
     });
-  }
+    console.log('🚀 ~ connectWallet ~ snap:', snap);
+    const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
+    const version = process.env.NEXT_PUBLIC_REQUIRED_SNAP_VERSION as string;
 
-  async function addPaymentMethod(account: string, session: string) {
-    const [res, error] = await handleRequest(
-      exampleService.addPaymentMethod({
-        kbAccountId: account,
-        sessionId: session,
-      })
-    );
-  }
-
-  async function createSubscription(account: string) {
-    const [res, error] = await handleRequest(
-      exampleService.createSubscription(
-        {
-          accountId: account,
-          // externalKey: account,
-          productName: 'Sports',
-          productCategory: 'BASE',
-          billingPeriod: 'MONTHLY',
-          priceList: 'DEFAULT',
+    if (
+      !snap ||
+      !snap.hasOwnProperty(snapId) ||
+      !snap[snapId] ||
+      snap[snapId]?.version !== version
+    ) {
+      await window.ethereum?.request({
+        method: 'wallet_requestSnaps',
+        params: {
+          [snapId]: {
+            version: `^${version}`,
+          },
         },
-        {
-          callCompletion: true,
-          callTimeoutSec: 20,
-        }
-      )
-    );
-  }
-
-  async function getAccountInvoices(account: string) {
-    const [res, error] = await handleRequest(
-      exampleService.getAccountInvoices({
-        accountId: account,
-      })
-    );
-    console.log(
-      '🚀 ~ file: index.tsx:115 ~ getAccountInvoices ~ res, error:',
-      res,
-      error
-    );
-  }
-  async function getAccount(account: string) {
-    const [res, error] = await handleRequest(
-      exampleService.getAccount({
-        accountId: account,
-        accountWithBalance: true,
-        accountWithBalanceAndCBA: true,
-      })
-    );
-    console.log(
-      '🚀 ~ file: index.tsx:115 ~ getAccountInvoices ~ res, error:',
-      res,
-      error
-    );
-  }
-
-  async function getCatalog() {
-    const [res, error] = await handleRequest(exampleService.getCatalog());
-  }
-
-  useEffect(() => {
-    getCatalog();
-  }, []);
-
-  async function executePayment(kbAccountId: string, sessionId: string) {
-    const [_, error] = await handleRequest(
-      addPaymentMethod(kbAccountId as string, sessionId as string)
-    );
-    if (error) {
-      alert('can add payment method');
+      });
     }
-    await handleRequest(createSubscription(kbAccountId as string));
+    const accountInfo = await window.ethereum?.request<any>({
+      method: 'wallet_invokeSnap',
+      params: {
+        snapId,
+        request: {
+          method: 'mina_accountInfo',
+          params: {},
+        },
+      },
+    });
+    if (!accountInfo) return '';
+    return accountInfo.publicKey || '';
   }
 
-  useEffect(() => {
-    // if (true) return;
-    console.log(kbAccountId, sessionId);
+  async function Run() {
+    const addr = await connectWallet();
+    const [res, error] = await handleRequest(
+      exampleService.buildTX({
+        fromAddr: addr,
+      })
+    );
+    if (error || !res) return;
+    console.log(
+      '🚀 ~ Run ~ res, error:',
+      JSON.parse(res.data.replace('\\', ''))
+    );
+    const txJSON = res.data.replace('\\', '');
+    console.log('sending transaction...', getTime());
 
-    if (!!!kbAccountId || !!!sessionId) return;
-    // executePayment(kbAccountId as string, sessionId as string);
-    // getAccountInvoices(kbAccountId as string);
-    // getAccount(kbAccountId as string);
-  }, [kbAccountId, sessionId]);
-
-  useEffect(() => {
-    if (!!!kbAccountId) return;
-    // getAccountInvoices(kbAccountId as string);
-    // getAccount(kbAccountId as string);
-  }, [kbAccountId]);
+    const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
+    const sendRes = await window.ethereum?.request({
+      method: 'wallet_invokeSnap',
+      params: {
+        snapId: snapId,
+        request: {
+          method: 'mina_sendTransaction',
+          params: {
+            transaction: txJSON,
+            feePayer: {
+              fee: 0.1,
+            },
+          },
+        },
+      },
+    });
+    console.log(
+      '🚀 ~ file: index.tsx:57 ~ callZKTransaction ~ res:',
+      getTime(),
+      sendRes
+    );
+  }
 
   return (
     <>
@@ -217,7 +162,9 @@ const Home: NextPageWithLayout<Props> = (props) => {
           </a>
         </div>
       </div>
-      <button onClick={Run}>Pay</button>
+      <button onClick={Run} style={{ color: 'white' }}>
+        Test
+      </button>
       <div className={styles.center}>
         <Image
           className={styles.logo}

@@ -14,7 +14,10 @@ export class AxiosService {
     const service = axios.create({
       withCredentials: false,
       responseType: 'json',
-      baseURL: process.env.NEXT_PUBLIC_BASE_URI || '',
+      baseURL:
+        typeof window !== 'undefined'
+          ? window.location.origin + '/api'
+          : process.env.NEXT_PUBLIC_BASE_URI,
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',

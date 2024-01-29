@@ -21,6 +21,9 @@ class PairDetailService {
   buildTX(body: { fromAddr: string }) {
     return this.service.post<any>(`/buildTx`, body);
   }
+  buildTXnoCb(body: { fromAddr: string }) {
+    return this.service.post<any>(`/buildTxNoCB`, body);
+  }
 }
 
 export default new PairDetailService();

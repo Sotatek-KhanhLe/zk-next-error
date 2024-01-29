@@ -1,9 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createRouter } from 'next-connect';
-import Token from '@/configs/cbABIs/Erc20_mina.raw';
-import Hooks from '@/configs/cbABIs/Hooks';
-import { Bridge } from '@/configs/cbABIs/Bridge';
+import Token from '@/configs/noCbABIs/token';
+import Hooks from '@/configs/noCbABIs/Hooks';
 import {
   Experimental,
   fetchAccount,
@@ -30,19 +29,13 @@ const router = createRouter<Request, NextApiResponse>();
 router.post(async (req, res) => {
   console.log(req.body);
 
-  // hook pubkey
   const hook = PublicKey.fromBase58(
-    'B62qj8oiQzRDzvGWS89mNkpKvufyYWMP9Uombsy73sLWBzHi9swY4a2'
+    'B62qrfzq3XWb97qokKVjkqHyiQpaBwm5akhG45BXu4sSiRam7xSS3iY'
   );
 
   // token pubkey
   const zkAppAddress = PublicKey.fromBase58(
-    'B62qohaSdFQHsRwePtARWT8rUQMU92L5D5HWQ9pA2xUVJKHpytaW873'
-  );
-
-  // bridge pubkey
-  const zkBridgeAddress = PublicKey.fromBase58(
-    'B62qjw7APgQFKZKsufgVvoArwmpxppn7aPpmnAXXwpGPGzsX3vDQga3'
+    'B62qndzCeUGN2Uzr7AQdqEQwRPJAoVu9AwirwfCTMqkbM6PuF5Dx5Ae'
   );
 
   console.log('compile token', getTime());
@@ -52,11 +45,8 @@ router.post(async (req, res) => {
   await Hooks.compile();
 
   console.log('compile bridge', getTime());
-  await Bridge.compile();
 
   const zkApp = new Token(zkAppAddress);
-
-  const zkBridge = new Bridge(zkBridgeAddress, zkApp.token.id);
 
   console.log('save instance', getTime());
   Mina.setActiveInstance(
@@ -71,12 +61,6 @@ router.post(async (req, res) => {
   // fetch token account
   await fetchAccount({
     publicKey: zkAppAddress,
-  });
-
-  console.log('fetch bridge account', getTime());
-  // fetch bridge account
-  await fetchAccount({
-    publicKey: zkBridgeAddress,
   });
 
   console.log('fetch hook account', getTime());
@@ -94,16 +78,15 @@ router.post(async (req, res) => {
   });
 
   console.log('build tx', getTime());
-  let tx = await Mina.transaction(sender, async () => {
-    const cb = Experimental.Callback.create(zkBridge, 'checkMinMax', [
-      UInt64.from(1_000_000n),
-    ]);
-    await zkApp.lock(
-      Field.from('0x64797030263Fa2f3be3Fb4d9b7c16FDf11e6d8E1'),
-      zkBridgeAddress,
-      cb
-    );
-  });
+  let tx = await Mina.transaction(
+    { sender, fee: UInt64.from(5_00_000_000n) },
+    async () => {
+      await zkApp.lock(
+        Field.from('0x64797030263Fa2f3be3Fb4d9b7c16FDf11e6d8E1'),
+        UInt64.from(1_000_000n)
+      );
+    }
+  );
 
   console.log('prove tx', getTime());
   // await tx.prove();

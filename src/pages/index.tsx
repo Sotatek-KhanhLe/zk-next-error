@@ -19,13 +19,18 @@ import variables from '@/styles/_variables.module.scss';
 import { getStaticLocalePath } from '@/helpers/handleSeverProps';
 import { ParsedUrlQuery } from 'querystring';
 import exampleService from '@/services/exampleService';
-import { handleRequest } from '@/helpers/handleAsync';
+import { handleRequest, handleRequestWithError } from '@/helpers/handleAsync';
 import { loadStripe } from '@stripe/stripe-js';
 import { useRouter } from 'next/router';
 import { Mina } from 'o1js';
 import moment from 'moment';
 
 const inter = Inter({ subsets: ['latin'] });
+
+enum WalletName {
+  METAMASK = 'METAMASK',
+  AURO = 'AURO',
+}
 
 type Props = {
   lang: string;
@@ -51,78 +56,121 @@ function getTime() {
 const Home: NextPageWithLayout<Props> = (props) => {
   const exampleState = useAppSelector(getExampleState);
   const { t } = useTranslation();
-  async function connectWallet() {
-    const snap = await window?.ethereum?.request<
-      Record<string, { id: string; version: string }>
-    >({
-      method: 'wallet_getSnaps',
-    });
-    console.log('🚀 ~ connectWallet ~ snap:', snap);
-    const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
-    const version = process.env.NEXT_PUBLIC_REQUIRED_SNAP_VERSION as string;
+  async function connectWallet(walletName: WalletName) {
+    if (walletName === WalletName.METAMASK) {
+      const snap = await window?.ethereum?.request<
+        Record<string, { id: string; version: string }>
+      >({
+        method: 'wallet_getSnaps',
+      });
+      console.log('🚀 ~ connectWallet ~ snap:', snap);
+      const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
+      const version = process.env.NEXT_PUBLIC_REQUIRED_SNAP_VERSION as string;
 
-    if (
-      !snap ||
-      !snap.hasOwnProperty(snapId) ||
-      !snap[snapId] ||
-      snap[snapId]?.version !== version
-    ) {
-      await window.ethereum?.request({
-        method: 'wallet_requestSnaps',
+      if (
+        !snap ||
+        !snap.hasOwnProperty(snapId) ||
+        !snap[snapId] ||
+        snap[snapId]?.version !== version
+      ) {
+        await window.ethereum?.request({
+          method: 'wallet_requestSnaps',
+          params: {
+            [snapId]: {
+              version: `^${version}`,
+            },
+          },
+        });
+      }
+      const accountInfo = await window.ethereum?.request<any>({
+        method: 'wallet_invokeSnap',
         params: {
-          [snapId]: {
-            version: `^${version}`,
+          snapId,
+          request: {
+            method: 'mina_accountInfo',
+            params: {},
           },
         },
       });
+      if (!accountInfo) return '';
+      return accountInfo.publicKey || '';
     }
-    const accountInfo = await window.ethereum?.request<any>({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId,
-        request: {
-          method: 'mina_accountInfo',
-          params: {},
-        },
-      },
-    });
-    if (!accountInfo) return '';
-    return accountInfo.publicKey || '';
+    const [res, error] = await handleRequestWithError(
+      window!!.mina!!.requestAccounts()
+    );
+    if (error) throw error;
+
+    if (!res || res.length === 0 || typeof res[0] === undefined) {
+      throw new Error('fail');
+    }
+    return res[0];
   }
+  const wallet: WalletName = WalletName.METAMASK;
 
   async function Run() {
-    const addr = await connectWallet();
+    const addr = await connectWallet(wallet);
+    // const [res, error] = await handleRequest(
+    //   exampleService.buildTX({
+    //     fromAddr: addr,
+    //   })
+    // );
     const [res, error] = await handleRequest(
-      exampleService.buildTX({
+      exampleService.buildTXnoCb({
         fromAddr: addr,
       })
     );
+    // const [res, error] = await handleRequest(import('@/configs/test.json'));
     if (error || !res) return;
-    console.log(
-      '🚀 ~ Run ~ res, error:',
-      JSON.parse(res.data.replace('\\', ''))
-    );
-    const txJSON = res.data.replace('\\', '');
-    console.log('sending transaction...', getTime());
 
-    const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
-    const sendRes = await window.ethereum?.request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId: snapId,
-        request: {
-          method: 'mina_sendTransaction',
-          params: {
-            transaction: txJSON,
-            feePayer: {
-              fee: 0.1,
+    const txJSON = res.data.replace('\\', '');
+    // const txJSON: any = res;
+
+    // console.log('🚀 ~ Run ~ txJSON:', JSON.parse(txJSON));
+    console.log('sending transaction...', getTime());
+    Mina.setActiveInstance(
+      Mina.Network({
+        mina: 'https://proxy.berkeley.minaexplorer.com/graphql',
+        // mina: 'https://api.minascan.io/node/berkeley/v1/graphql',
+        archive: 'https://api.minascan.io/archive/berkeley/v1/graphql/',
+      })
+    );
+
+    // const tx = Mina.Transaction.fromJSON(txJSON);
+    const tx = Mina.Transaction.fromJSON(JSON.parse(txJSON));
+    await tx.prove();
+    console.log(tx.toPretty());
+
+    if (wallet === WalletName.METAMASK) {
+      const snapId = process.env.NEXT_PUBLIC_REQUIRED_SNAP_ID as string;
+      const sendRes = await window.ethereum?.request({
+        method: 'wallet_invokeSnap',
+        params: {
+          snapId: snapId,
+          request: {
+            method: 'mina_sendTransaction',
+            params: {
+              transaction: tx.toJSON(),
+              feePayer: {
+                fee: 0.1,
+              },
             },
           },
         },
-      },
-    });
+      });
+      console.log(
+        '🚀 ~ file: index.tsx:57 ~ callZKTransaction ~ res:',
+        getTime(),
+        sendRes
+      );
+      return;
+    }
+    const sendRes = await handleRequestWithError(
+      window!!.mina!!.sendTransaction({
+        transaction: tx.toJSON(),
+      })
+    );
     console.log(
-      '🚀 ~ file: index.tsx:57 ~ callZKTransaction ~ res:',
+      '🚀 ~ file: index.tsx:165 ~ callZKTransaction ~ res:',
       getTime(),
       sendRes
     );
